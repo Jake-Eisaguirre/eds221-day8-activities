@@ -1,0 +1,122 @@
+---
+title: "ugly figures"
+author: "Jake Eisaguirre"
+date: "8/18/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(here)
+library(tidyverse)
+```
+
+##ugly figure
+```{r}
+space <- read_csv(here("data", "space_launches.csv"))
+
+ggplot(space, aes(x = launch_year, y = agency)) +
+  
+  geom_line(aes(fill = variant), show.legend = T) +
+  
+  theme(
+    panel.background = element_rect(fill = "yellow", 
+                                    color = "purple",
+                                    size = 38),
+    
+    panel.grid.major.x = element_line(color = "red"),
+    panel.grid.major = element_line(color = "grey"),
+    panel.grid.minor.y = element_line(color = "cyan"),
+    plot.background = element_rect(fill = "blue"),
+    axis.text.x = element_text(color = "orange", size = 20),
+    axis.title = element_text(color = "purple", size = 30),
+    axis.text.y = element_text(color = "brown", size = 30)
+  ) +
+  
+  labs(title = "Jeff Bezos is an alien stuck on earth trying to get home")
+
+
+ggsave(here("figs", "space.jpeg"))
+  
+  
+
+
+```
+
+```{r}
+
+sf <- read_csv(here("data", "San_Francisco_Communitywide_Greenhouse_Gas_Inventory.csv"))
+
+sf_data <- sf %>% 
+  
+  select(Sector_General, Emissions_mtCO2e, Calendar_Year) %>% 
+  
+  group_by(Calendar_Year, Sector_General) %>% 
+  
+  summarize(mean_annual_emmisions = mean(Emissions_mtCO2e, na.rm = T))
+
+
+
+sf_data_1 <- sf %>% 
+  
+  group_by(Calendar_Year, Commodity_Type) %>% 
+  
+  summarize(mean_annual_emmisions = mean(Emissions_mtCO2e, na.rm = T))
+
+
+sf_data05 <- sf %>% 
+  
+  filter(str_detect(Sector_Detail2, pattern = "PG&E")) %>% 
+  
+  select(Calendar_Year, Sector_Detail2, Emissions_mtCO2e) %>% 
+  
+  filter(Calendar_Year %in% c(2005:2019))
+
+
+
+```
+
+
+```{r}
+
+clean_data <- sf %>% 
+  
+  select(Calendar_Year, Emissions_mtCO2e, Commodity_Type) %>% 
+  
+  group_by(Calendar_Year, Commodity_Type) %>% 
+  
+  summarize(mean_annual_emmisions = mean(Emissions_mtCO2e/1000, na.rm = T)) %>% 
+  
+  filter(Commodity_Type %in% c("Diesel", "Gasoline", "Electricity", "Natural Gas", "Animal Waste")) %>% 
+  
+  rename(Commodity = Commodity_Type) %>% 
+  
+  mutate(Commodity = fct_reorder(Commodity, mean_annual_emmisions, .fun = min))
+  
+
+ggplot(clean_data, aes(x = Calendar_Year, y = mean_annual_emmisions, color = Commodity)) +
+  
+  geom_line(size = 1.3) +
+  
+  theme_classic() +
+  
+  labs(x = "Year", y = "Mean Annual Emissions (per 1000) mtCO2e", title = "Emissions by Commodity Type") +
+  
+  scale_y_continuous(limits = c(0, 800),
+                     breaks = c(0, 100, 200, 300, 400, 500, 600, 700, 800)) +
+  
+  scale_x_continuous(limits = c(1990, 2020),
+                     breaks = c(1990, 1995, 2000, 2005, 2010, 2015, 2020))
+  
+  
+ggsave(here::here("figs", "nice_one.jpeg"))
+  
+  
+ 
+  
+  
+  
+  
+
+```
+
